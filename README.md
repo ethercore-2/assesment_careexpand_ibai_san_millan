@@ -1,98 +1,221 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# User Management Service
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A NestJS-based microservice for managing users with external API integration, built following clean architecture principles and best practices.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 🚀 Features
 
-## Description
+- **User Management**: Create and list users with validation
+- **External API Integration**: Fetch data from reqres.in API
+- **Request Logging**: Comprehensive middleware for request tracking
+- **Error Handling**: Centralized error management with custom exceptions
+- **Data Validation**: DTOs with class-validator decorators
+- **TypeScript**: Full type safety and IntelliSense support
+- **Testing**: Comprehensive unit tests with Jest
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 📋 Prerequisites
 
-## Project setup
+- Node.js (v18 or higher)
+- npm or yarn package manager
+- Git
+
+## 🛠️ Installation & Setup
+
+### 1. Clone the Repository
 
 ```bash
-$ npm install
+git clone https://github.com/ethercore-2/assesment_careexpand_ibai_san_millan.git
+cd assesment_careexpand_ibai_san_millan
 ```
 
-## Compile and run the project
+### 2. Install Dependencies
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
+### 3. Environment Setup
+
+Create a `.env` file in the root directory:
+
+```env
+PORT=3000
+NODE_ENV=development
+```
+
+### 4. Run the Application
 
 ```bash
-# unit tests
-$ npm run test
+# Development mode
+npm run start:dev
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+# Production mode
+npm run start:prod
 ```
 
-## Deployment
+The application will be available at `http://localhost:3000`
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## 🏗️ Project Structure
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+```
+src/
+├── users/                    # User management module
+│   ├── dto/                  # Data Transfer Objects
+│   │   ├── create-user.dto.ts
+│   │   └── user-response.dto.ts
+│   ├── users.controller.ts   # User endpoints
+│   ├── users.service.ts      # User business logic
+│   └── users.module.ts       # User module configuration
+├── logging/                  # Logging middleware
+│   └── logging.middleware.ts
+├── app.module.ts             # Main application module
+└── main.ts                   # Application entry point
+```
+
+## 📚 API Endpoints
+
+### POST /users
+Create a new user
+
+**Request Body:**
+```json
+{
+  "name": "John Doe",
+  "email": "john.doe@example.com"
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "createdAt": "2024-01-15T10:30:00.000Z"
+}
+```
+
+### GET /users
+Get all users
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "createdAt": "2024-01-15T10:30:00.000Z"
+  }
+]
+```
+
+## 🔧 Development Methodology
+
+### 1. Clean Architecture Principles
+- **Separation of Concerns**: Each module has a single responsibility
+- **Dependency Injection**: Services are injected where needed
+- **Interface Segregation**: DTOs define clear contracts
+- **Error Handling**: Centralized exception management
+
+### 2. Code Organization
+- **Modular Structure**: Features are organized in modules
+- **DTO Pattern**: Data validation and transformation
+- **Service Layer**: Business logic separation
+- **Middleware**: Cross-cutting concerns
+
+### 3. Best Practices Implemented
+- **TypeScript**: Full type safety
+- **Validation**: Input validation with class-validator
+- **Error Handling**: Custom exceptions and global filters
+- **Logging**: Request/response tracking
+- **Testing**: Unit tests for all components
+
+## 🧪 Testing
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Run unit tests
+npm run test
+
+# Run tests with coverage
+npm run test:cov
+
+# Run e2e tests
+npm run test:e2e
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 📦 Dependencies
 
-## Resources
+### Production Dependencies
+- `@nestjs/common`: NestJS core functionality
+- `@nestjs/core`: NestJS core framework
+- `@nestjs/platform-express`: Express platform adapter
+- `class-validator`: Validation decorators
+- `class-transformer`: Data transformation
+- `axios`: HTTP client for external APIs
 
-Check out a few resources that may come in handy when working with NestJS:
+### Development Dependencies
+- `@nestjs/cli`: NestJS command line interface
+- `@nestjs/testing`: Testing utilities
+- `jest`: Testing framework
+- `typescript`: TypeScript compiler
+- `eslint`: Code linting
+- `prettier`: Code formatting
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## 🚀 Deployment
 
-## Support
+### Docker (Optional)
+```bash
+# Build Docker image
+docker build -t user-management-service .
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+# Run container
+docker run -p 3000:3000 user-management-service
+```
 
-## Stay in touch
+### Environment Variables
+- `PORT`: Application port (default: 3000)
+- `NODE_ENV`: Environment (development/production)
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## 📝 API Documentation
 
-## License
+### Error Responses
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+#### 400 Bad Request
+```json
+{
+  "statusCode": 400,
+  "message": "Validation failed",
+  "error": "Bad Request"
+}
+```
+
+#### 409 Conflict
+```json
+{
+  "statusCode": 409,
+  "message": "User with this email already exists",
+  "error": "Conflict"
+}
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👥 Authors
+
+- **Ibai San Millán** - *Initial work* - [ethercore-2](https://github.com/ethercore-2)
+
+## 🙏 Acknowledgments
+
+- NestJS team for the amazing framework
+- reqres.in for providing test API endpoints
+- The open-source community for various packages used
