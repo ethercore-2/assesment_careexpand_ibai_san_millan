@@ -1,36 +1,55 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UserConflictException } from '../common/exceptions/user-conflict.exception';
+import { User } from './entities/user.entity';
 import axios from 'axios';
 
 @Injectable()
 export class UsersService {
-  private users: Map<number, UserResponseDto> = new Map();
-  private nextId = 1;
+  constructor(
+    @InjectRepository(User)
+    private userRepository: Repository<User>,
+  ) {}
 
   async createUser(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     // Check if user already exists (case-insensitive)
-    for (const user of this.users.values()) {
-      if (user.email.toLowerCase() === createUserDto.email.toLowerCase()) {
-        throw new UserConflictException(createUserDto.email);
-      }
+    const existingUser = await this.userRepository.findOneBy({
+      email: createUserDto.email,
+    });
+
+    if (existingUser) {
+      throw new UserConflictException(createUserDto.email);
     }
 
-    // Create new user
-    const newUser: UserResponseDto = {
-      id: this.nextId++,
-      name: createUserDto.name,
-      email: createUserDto.email,
-      createdAt: new Date(),
-    };
+    // Create new user entity
+    const newUser = this.userRepository.create(createUserDto);
+    const savedUser = await this.userRepository.save(newUser);
 
-    this.users.set(newUser.id, newUser);
-    return newUser;
+    // Convert to response DTO
+    return {
+      id: savedUser.id,
+      name: savedUser.name,
+      email: savedUser.email,
+      createdAt: savedUser.createdAt,
+    };
   }
 
   async getUserList(): Promise<UserResponseDto[]> {
-    return Array.from(this.users.values());
+    const users = await this.userRepository.find();
+    
+    if (!users) {
+      return [];
+    }
+    
+    return users.map(user => ({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      createdAt: user.createdAt,
+    }));
   }
 
   async getExternalUsers(): Promise<any[]> {

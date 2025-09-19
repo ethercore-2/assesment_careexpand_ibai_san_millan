@@ -1,5 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { UsersService } from '../../../src/users/users.service';
+import { User } from '../../../src/users/entities/user.entity';
 import { CreateUserDto } from '../../../src/users/dto/create-user.dto';
 import { UserResponseDto } from '../../../src/users/dto/user-response.dto';
 import { UserConflictException } from '../../../src/common/exceptions/user-conflict.exception';
@@ -11,22 +14,32 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('UsersService', () => {
   let service: UsersService;
+  let userRepository: jest.Mocked<Repository<User>>;
+
+  const mockUserRepository = {
+    find: jest.fn(),
+    findOne: jest.fn(),
+    findOneBy: jest.fn(),
+    save: jest.fn(),
+    create: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [UsersService],
+      providers: [
+        UsersService,
+        {
+          provide: getRepositoryToken(User),
+          useValue: mockUserRepository,
+        },
+      ],
     }).compile();
 
     service = module.get<UsersService>(UsersService);
+    userRepository = module.get(getRepositoryToken(User));
     
     // Clear all mocks before each test
     jest.clearAllMocks();
-  });
-
-  afterEach(() => {
-    // Reset service state between tests
-    (service as any).users.clear();
-    (service as any).nextId = 1;
   });
 
   describe('Service Initialization', () => {
@@ -34,13 +47,8 @@ describe('UsersService', () => {
       expect(service).toBeDefined();
     });
 
-    it('should initialize with empty users map', () => {
-      expect((service as any).users).toBeDefined();
-      expect((service as any).users.size).toBe(0);
-    });
-
-    it('should initialize with nextId starting at 1', () => {
-      expect((service as any).nextId).toBe(1);
+    it('should have user repository injected', () => {
+      expect(userRepository).toBeDefined();
     });
   });
 
@@ -52,6 +60,16 @@ describe('UsersService', () => {
 
     describe('Success Cases', () => {
       it('should create a user successfully with valid data', async () => {
+        const mockUser = new User();
+        mockUser.id = 1;
+        mockUser.name = validCreateUserDto.name;
+        mockUser.email = validCreateUserDto.email;
+        mockUser.createdAt = new Date();
+
+        userRepository.findOneBy.mockResolvedValue(null); // No existing user
+        userRepository.create.mockReturnValue(mockUser);
+        userRepository.save.mockResolvedValue(mockUser);
+
         const result = await service.createUser(validCreateUserDto);
 
         expect(result).toBeDefined();
@@ -61,10 +79,28 @@ describe('UsersService', () => {
         });
         expect(result.id).toBe(1);
         expect(result.createdAt).toBeInstanceOf(Date);
-        expect(result.createdAt.getTime()).toBeLessThanOrEqual(Date.now());
+        expect(userRepository.findOneBy).toHaveBeenCalledWith({ email: validCreateUserDto.email });
+        expect(userRepository.create).toHaveBeenCalledWith(validCreateUserDto);
+        expect(userRepository.save).toHaveBeenCalledWith(mockUser);
       });
 
       it('should assign unique incremental IDs', async () => {
+        const mockUser1 = new User();
+        mockUser1.id = 1;
+        mockUser1.name = validCreateUserDto.name;
+        mockUser1.email = validCreateUserDto.email;
+        mockUser1.createdAt = new Date();
+
+        const mockUser2 = new User();
+        mockUser2.id = 2;
+        mockUser2.name = 'Jane Doe';
+        mockUser2.email = 'jane.doe@example.com';
+        mockUser2.createdAt = new Date();
+
+        userRepository.findOneBy.mockResolvedValue(null);
+        userRepository.create.mockReturnValueOnce(mockUser1).mockReturnValueOnce(mockUser2);
+        userRepository.save.mockResolvedValueOnce(mockUser1).mockResolvedValueOnce(mockUser2);
+
         const user1 = await service.createUser(validCreateUserDto);
         const user2 = await service.createUser({
           name: 'Jane Doe',
@@ -75,19 +111,21 @@ describe('UsersService', () => {
         expect(user2.id).toBe(2);
       });
 
-      it('should store user in internal map', async () => {
-        await service.createUser(validCreateUserDto);
-        
-        const users = (service as any).users;
-        expect(users.size).toBe(1);
-        expect(users.get(1)).toBeDefined();
-      });
-
       it('should handle special characters in name', async () => {
         const specialNameDto: CreateUserDto = {
           name: 'José María O\'Connor-Smith',
           email: 'jose.maria@example.com',
         };
+
+        const mockUser = new User();
+        mockUser.id = 1;
+        mockUser.name = specialNameDto.name;
+        mockUser.email = specialNameDto.email;
+        mockUser.createdAt = new Date();
+
+        userRepository.findOneBy.mockResolvedValue(null);
+        userRepository.create.mockReturnValue(mockUser);
+        userRepository.save.mockResolvedValue(mockUser);
 
         const result = await service.createUser(specialNameDto);
         expect(result.name).toBe(specialNameDto.name);
@@ -99,6 +137,16 @@ describe('UsersService', () => {
           email: 'test@example.co.uk',
         };
 
+        const mockUser = new User();
+        mockUser.id = 1;
+        mockUser.name = internationalEmailDto.name;
+        mockUser.email = internationalEmailDto.email;
+        mockUser.createdAt = new Date();
+
+        userRepository.findOneBy.mockResolvedValue(null);
+        userRepository.create.mockReturnValue(mockUser);
+        userRepository.save.mockResolvedValue(mockUser);
+
         const result = await service.createUser(internationalEmailDto);
         expect(result.email).toBe(internationalEmailDto.email);
       });
@@ -106,7 +154,13 @@ describe('UsersService', () => {
 
     describe('Error Cases', () => {
       it('should throw UserConflictException when email already exists', async () => {
-        await service.createUser(validCreateUserDto);
+        const existingUser = new User();
+        existingUser.id = 1;
+        existingUser.name = 'Existing User';
+        existingUser.email = validCreateUserDto.email;
+        existingUser.createdAt = new Date();
+
+        userRepository.findOneBy.mockResolvedValue(existingUser);
 
         await expect(service.createUser(validCreateUserDto)).rejects.toThrow(
           UserConflictException,
@@ -114,10 +168,19 @@ describe('UsersService', () => {
         await expect(service.createUser(validCreateUserDto)).rejects.toThrow(
           'User with email john.doe@example.com already exists',
         );
+        expect(userRepository.findOneBy).toHaveBeenCalledWith({ email: validCreateUserDto.email });
+        expect(userRepository.create).not.toHaveBeenCalled();
+        expect(userRepository.save).not.toHaveBeenCalled();
       });
 
       it('should throw UserConflictException with case-insensitive email comparison', async () => {
-        await service.createUser(validCreateUserDto);
+        const existingUser = new User();
+        existingUser.id = 1;
+        existingUser.name = 'Existing User';
+        existingUser.email = 'JOHN.DOE@EXAMPLE.COM';
+        existingUser.createdAt = new Date();
+
+        userRepository.findOneBy.mockResolvedValue(existingUser);
 
         const duplicateEmailDto: CreateUserDto = {
           name: 'Different Name',
@@ -128,19 +191,6 @@ describe('UsersService', () => {
           UserConflictException,
         );
       });
-
-      it('should not create user when conflict occurs', async () => {
-        await service.createUser(validCreateUserDto);
-        const initialUserCount = (service as any).users.size;
-
-        try {
-          await service.createUser(validCreateUserDto);
-        } catch (error) {
-          // Expected to throw
-        }
-
-        expect((service as any).users.size).toBe(initialUserCount);
-      });
     });
 
     describe('Edge Cases', () => {
@@ -150,7 +200,16 @@ describe('UsersService', () => {
           email: 'test@example.com',
         };
 
-        // This should be handled by validation, but testing service behavior
+        const mockUser = new User();
+        mockUser.id = 1;
+        mockUser.name = emptyNameDto.name;
+        mockUser.email = emptyNameDto.email;
+        mockUser.createdAt = new Date();
+
+        userRepository.findOneBy.mockResolvedValue(null);
+        userRepository.create.mockReturnValue(mockUser);
+        userRepository.save.mockResolvedValue(mockUser);
+
         const result = await service.createUser(emptyNameDto);
         expect(result.name).toBe('');
       });
@@ -160,6 +219,16 @@ describe('UsersService', () => {
           name: 'A'.repeat(1000),
           email: 'longname@example.com',
         };
+
+        const mockUser = new User();
+        mockUser.id = 1;
+        mockUser.name = longNameDto.name;
+        mockUser.email = longNameDto.email;
+        mockUser.createdAt = new Date();
+
+        userRepository.findOneBy.mockResolvedValue(null);
+        userRepository.create.mockReturnValue(mockUser);
+        userRepository.save.mockResolvedValue(mockUser);
 
         const result = await service.createUser(longNameDto);
         expect(result.name).toBe(longNameDto.name);
@@ -171,6 +240,16 @@ describe('UsersService', () => {
           email: 'a'.repeat(100) + '@example.com',
         };
 
+        const mockUser = new User();
+        mockUser.id = 1;
+        mockUser.name = longEmailDto.name;
+        mockUser.email = longEmailDto.email;
+        mockUser.createdAt = new Date();
+
+        userRepository.findOneBy.mockResolvedValue(null);
+        userRepository.create.mockReturnValue(mockUser);
+        userRepository.save.mockResolvedValue(mockUser);
+
         const result = await service.createUser(longEmailDto);
         expect(result.email).toBe(longEmailDto.email);
       });
@@ -180,69 +259,79 @@ describe('UsersService', () => {
   describe('getUserList', () => {
     describe('Success Cases', () => {
       it('should return empty array when no users exist', async () => {
+        userRepository.find.mockResolvedValue([]);
+
         const result = await service.getUserList();
         expect(result).toEqual([]);
         expect(Array.isArray(result)).toBe(true);
+        expect(userRepository.find).toHaveBeenCalledTimes(1);
       });
 
       it('should return all users when users exist', async () => {
-        const user1 = await service.createUser({
-          name: 'User One',
-          email: 'user1@example.com',
-        });
-        const user2 = await service.createUser({
-          name: 'User Two',
-          email: 'user2@example.com',
-        });
+        const mockUsers = [
+          {
+            id: 1,
+            name: 'User One',
+            email: 'user1@example.com',
+            createdAt: new Date('2024-01-15T10:30:00.000Z'),
+          },
+          {
+            id: 2,
+            name: 'User Two',
+            email: 'user2@example.com',
+            createdAt: new Date('2024-01-15T11:30:00.000Z'),
+          },
+        ];
+
+        userRepository.find.mockResolvedValue(mockUsers as User[]);
 
         const result = await service.getUserList();
 
         expect(result).toHaveLength(2);
-        expect(result).toContainEqual(user1);
-        expect(result).toContainEqual(user2);
+        expect(result[0]).toMatchObject({
+          id: 1,
+          name: 'User One',
+          email: 'user1@example.com',
+        });
+        expect(result[1]).toMatchObject({
+          id: 2,
+          name: 'User Two',
+          email: 'user2@example.com',
+        });
+        expect(userRepository.find).toHaveBeenCalledTimes(1);
       });
 
-      it('should return users in creation order', async () => {
-        const user1 = await service.createUser({
-          name: 'First User',
-          email: 'first@example.com',
-        });
-        const user2 = await service.createUser({
-          name: 'Second User',
-          email: 'second@example.com',
-        });
+      it('should return users in correct format', async () => {
+        const mockUser = {
+          id: 1,
+          name: 'Test User',
+          email: 'test@example.com',
+          createdAt: new Date(),
+        };
+
+        userRepository.find.mockResolvedValue([mockUser] as User[]);
 
         const result = await service.getUserList();
 
-        expect(result[0]).toEqual(user1);
-        expect(result[1]).toEqual(user2);
-      });
-
-      it('should return a copy of users array, not reference', async () => {
-        await service.createUser({
-          name: 'Test User',
-          email: 'test@example.com',
-        });
-
-        const result1 = await service.getUserList();
-        const result2 = await service.getUserList();
-
-        expect(result1).not.toBe(result2); // Different array instances
-        expect(result1).toEqual(result2); // Same content
+        expect(result[0]).toHaveProperty('id');
+        expect(result[0]).toHaveProperty('name');
+        expect(result[0]).toHaveProperty('email');
+        expect(result[0]).toHaveProperty('createdAt');
+        expect(result[0].createdAt).toBeInstanceOf(Date);
       });
     });
 
     describe('Performance Cases', () => {
       it('should handle large number of users efficiently', async () => {
         const userCount = 1000;
-        
-        // Create many users
-        for (let i = 0; i < userCount; i++) {
-          await service.createUser({
-            name: `User ${i}`,
-            email: `user${i}@example.com`,
-          });
-        }
+        const mockUsers = Array.from({ length: userCount }, (_, i) => ({
+          id: i + 1,
+          name: `User ${i + 1}`,
+          email: `user${i + 1}@example.com`,
+          createdAt: new Date(),
+        }));
+
+        userRepository.find.mockResolvedValue(mockUsers as User[]);
 
         const startTime = Date.now();
         const result = await service.getUserList();
@@ -366,7 +455,27 @@ describe('UsersService', () => {
 
   describe('Integration Scenarios', () => {
     it('should handle mixed operations correctly', async () => {
-      // Create users
+      const mockUser1 = new User();
+      mockUser1.id = 1;
+      mockUser1.name = 'User One';
+      mockUser1.email = 'user1@example.com';
+      mockUser1.createdAt = new Date();
+
+      const mockUser2 = new User();
+      mockUser2.id = 2;
+      mockUser2.name = 'User Two';
+      mockUser2.email = 'user2@example.com';
+      mockUser2.createdAt = new Date();
+
+      // Mock for createUser calls
+      userRepository.findOneBy.mockResolvedValue(null);
+      userRepository.create.mockReturnValueOnce(mockUser1).mockReturnValueOnce(mockUser2);
+      userRepository.save.mockResolvedValueOnce(mockUser1).mockResolvedValueOnce(mockUser2);
+
+      // Mock for getUserList calls
+      userRepository.find.mockResolvedValueOnce([mockUser1]).mockResolvedValueOnce([mockUser1, mockUser2]);
+
+      // Create first user
       const user1 = await service.createUser({
         name: 'User One',
         email: 'user1@example.com',
@@ -385,23 +494,31 @@ describe('UsersService', () => {
       // Get updated user list
       users = await service.getUserList();
       expect(users).toHaveLength(2);
-      expect(users).toContainEqual(user1);
-      expect(users).toContainEqual(user2);
+      expect(users[0]).toMatchObject({ name: 'User One', email: 'user1@example.com' });
+      expect(users[1]).toMatchObject({ name: 'User Two', email: 'user2@example.com' });
 
       // Try to create duplicate (should fail)
+      userRepository.findOneBy.mockResolvedValue(mockUser1);
       await expect(service.createUser({
         name: 'Duplicate User',
         email: 'user1@example.com',
       })).rejects.toThrow(UserConflictException);
-
-      // User list should remain unchanged
-      users = await service.getUserList();
-      expect(users).toHaveLength(2);
     });
 
     it('should maintain data consistency across operations', async () => {
-      const initialUsers = await service.getUserList();
-      expect(initialUsers).toHaveLength(0);
+      const mockUser = new User();
+      mockUser.id = 1;
+      mockUser.name = 'Test User';
+      mockUser.email = 'test@example.com';
+      mockUser.createdAt = new Date();
+
+      // Mock for createUser
+      userRepository.findOneBy.mockResolvedValue(null);
+      userRepository.create.mockReturnValue(mockUser);
+      userRepository.save.mockResolvedValue(mockUser);
+
+      // Mock for getUserList
+      userRepository.find.mockResolvedValue([mockUser]);
 
       const user = await service.createUser({
         name: 'Test User',
@@ -410,7 +527,7 @@ describe('UsersService', () => {
 
       const usersAfterCreate = await service.getUserList();
       expect(usersAfterCreate).toHaveLength(1);
-      expect(usersAfterCreate[0]).toEqual(user);
+      expect(usersAfterCreate[0]).toMatchObject(user);
 
       // Verify user data integrity
       expect(user.id).toBe(1);

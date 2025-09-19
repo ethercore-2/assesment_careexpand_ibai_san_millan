@@ -5,6 +5,7 @@ A NestJS-based microservice for managing users with external API integration, bu
 ## 🚀 Features
 
 - **User Management**: Create and list users with validation
+- **Database Integration**: SQLite database with TypeORM for persistent storage
 - **External API Integration**: Fetch data from reqres.in API
 - **Request Logging**: Comprehensive middleware for request tracking
 - **Error Handling**: Centralized error management with custom exceptions
@@ -110,6 +111,32 @@ Get all users
 ]
 ```
 
+## 🗄️ Database Integration
+
+The service uses SQLite with TypeORM for persistent data storage:
+
+### Database Features
+- **SQLite Database**: Lightweight, file-based database for development
+- **TypeORM Integration**: Object-Relational Mapping with decorators
+- **Entity Management**: User entity with automatic ID generation
+- **Data Persistence**: Users are stored permanently across application restarts
+- **Automatic Timestamps**: CreatedAt field automatically managed
+
+### Database Schema
+```sql
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Database File
+- **Location**: `database.sqlite` (created automatically)
+- **Synchronization**: Auto-sync enabled for development
+- **Backup**: Database file can be backed up and restored
+
 ## 🛡️ Rate Limiting
 
 The API implements rate limiting to protect against abuse and ensure fair usage:
@@ -155,6 +182,7 @@ When rate limits are exceeded, the API returns:
 - **TypeScript**: Full type safety
 - **Validation**: Input validation with class-validator
 - **Error Handling**: Custom exceptions and global filters
+- **Database Integration**: TypeORM with SQLite for persistent storage
 - **Rate Limiting**: Protection against abuse and DDoS attacks
 - **Logging**: Request/response tracking
 - **Testing**: Unit tests for all components
