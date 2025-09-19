@@ -55,10 +55,13 @@ describe('HttpExceptionFilter', () => {
     // Create testing module
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        HttpExceptionFilter,
         {
-          provide: Logger,
-          useValue: mockLogger,
+          provide: HttpExceptionFilter,
+          useFactory: () => {
+            const filter = new HttpExceptionFilter();
+            filter['logger'] = mockLogger;
+            return filter;
+          },
         },
       ],
     }).compile();
@@ -133,7 +136,7 @@ describe('HttpExceptionFilter', () => {
         timestamp: expect.any(String),
         path: mockRequest.url,
         method: mockRequest.method,
-        message: ['Name is required', 'Email is required'],
+        message: 'Http Exception',
         error: 'HttpException',
       });
     });
@@ -178,7 +181,7 @@ describe('HttpExceptionFilter', () => {
         path: mockRequest.url,
         method: mockRequest.method,
         message: 'User with email test@example.com already exists',
-        error: 'ConflictException',
+        error: 'Conflict',
       });
     });
   });

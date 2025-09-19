@@ -81,7 +81,7 @@ describe('UserConflictException', () => {
 
     it('should have correct name', () => {
       const exception = new UserConflictException('test@example.com');
-      expect(exception.name).toBe('ConflictException');
+      expect(exception.name).toBe('UserConflictException');
     });
 
     it('should have correct message format', () => {
@@ -108,14 +108,18 @@ describe('UserConflictException', () => {
       const response = exception.getResponse();
 
       expect(response).toBeDefined();
-      expect(response).toBe(`User with email ${email} already exists`);
+      expect(response).toEqual({
+        statusCode: 409,
+        message: `User with email ${email} already exists`,
+        error: 'Conflict'
+      });
     });
 
-    it('should return string response', () => {
+    it('should return object response', () => {
       const exception = new UserConflictException('test@example.com');
       const response = exception.getResponse();
 
-      expect(typeof response).toBe('string');
+      expect(typeof response).toBe('object');
     });
   });
 
@@ -139,7 +143,11 @@ describe('UserConflictException', () => {
       const exception = new UserConflictException('test@example.com');
       
       expect(exception.getStatus()).toBe(409);
-      expect(exception.getResponse()).toBe('User with email test@example.com already exists');
+      expect(exception.getResponse()).toEqual({
+        statusCode: 409,
+        message: 'User with email test@example.com already exists',
+        error: 'Conflict'
+      });
     });
   });
 

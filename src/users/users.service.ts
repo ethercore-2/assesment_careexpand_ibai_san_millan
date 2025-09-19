@@ -10,9 +10,9 @@ export class UsersService {
   private nextId = 1;
 
   async createUser(createUserDto: CreateUserDto): Promise<UserResponseDto> {
-    // Check if user already exists
+    // Check if user already exists (case-insensitive)
     for (const user of this.users.values()) {
-      if (user.email === createUserDto.email) {
+      if (user.email.toLowerCase() === createUserDto.email.toLowerCase()) {
         throw new UserConflictException(createUserDto.email);
       }
     }
@@ -36,7 +36,17 @@ export class UsersService {
   async getExternalUsers(): Promise<any[]> {
     try {
       const response = await axios.get('https://reqres.in/api/users');
-      return response.data.data;
+      
+      // Handle different response structures
+      if (response.data && response.data.data) {
+        return response.data.data;
+      } else if (response.data && response.data.users) {
+        return response.data.users;
+      } else if (Array.isArray(response.data)) {
+        return response.data;
+      } else {
+        throw new Error('Invalid response structure from external API');
+      }
     } catch (error) {
       throw new Error('Failed to fetch external users');
     }

@@ -10,7 +10,7 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   testEnvironment: 'node',
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^src/(.*)$': '<rootDir>/src/$1',
   },
   testPathIgnorePatterns: [

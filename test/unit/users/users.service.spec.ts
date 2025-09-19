@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UserResponseDto } from './dto/user-response.dto';
-import { UserConflictException } from '../common/exceptions/user-conflict.exception';
+import { UsersService } from '../../../src/users/users.service';
+import { CreateUserDto } from '../../../src/users/dto/create-user.dto';
+import { UserResponseDto } from '../../../src/users/dto/user-response.dto';
+import { UserConflictException } from '../../../src/common/exceptions/user-conflict.exception';
 import axios from 'axios';
 
 // Mock axios
