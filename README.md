@@ -13,6 +13,8 @@ A NestJS-based microservice for managing users with external API integration, bu
 - **Data Validation**: DTOs with class-validator decorators
 - **TypeScript**: Full type safety and IntelliSense support
 - **Testing**: Comprehensive unit tests with Jest
+- **Code Documentation**: Comprehensive English comments and JSDoc documentation
+- **Refactored Structure**: Optimized codebase with clean architecture
 
 ## 📋 Prerequisites
 
@@ -254,6 +256,35 @@ docker run -p 3000:3000 user-management-service
   "error": "Conflict"
 }
 ```
+
+## 📋 Refactoring Summary
+
+### Recent Improvements
+- ✅ **Code Documentation**: Added comprehensive English comments and JSDoc documentation to all source files
+- ✅ **Test Optimization**: Removed duplicate test files and consolidated test coverage
+- ✅ **Code Cleanup**: Eliminated unnecessary files and optimized project structure
+- ✅ **Documentation**: Updated README with refactored project structure
+
+### Code Quality Enhancements
+- **Comprehensive Comments**: All source files now include detailed English comments explaining functionality
+- **JSDoc Documentation**: Methods and classes documented with proper JSDoc annotations
+- **Simplified Tests**: Removed redundant test files while maintaining coverage
+- **Clean Architecture**: Optimized project structure for better maintainability
+
+### Files Refactored
+- `src/main.ts` - Added bootstrap documentation
+- `src/app.module.ts` - Added module configuration comments
+- `src/users/users.service.ts` - Added comprehensive method documentation
+- `src/users/users.controller.ts` - Added endpoint documentation
+- `src/users/dto/` - Added DTO property documentation
+- `src/users/entities/user.entity.ts` - Added entity field documentation
+- `src/logging/logging.middleware.ts` - Added middleware documentation
+- `src/common/filters/http-exception.filter.ts` - Added error handling documentation
+- `src/common/exceptions/user-conflict.exception.ts` - Added exception documentation
+
+### Files Removed
+- `test/unit/users/users.service.database.spec.ts` - Duplicate test file
+- Coverage and dist directories - Build artifacts
 
 ## 🤝 Contributing
 

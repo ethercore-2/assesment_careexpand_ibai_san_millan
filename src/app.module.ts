@@ -1,3 +1,7 @@
+/**
+ * Root application module
+ * Configures all global modules, middleware, guards, and filters
+ */
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -12,26 +16,31 @@ import { User } from './users/entities/user.entity';
 
 @Module({
   imports: [
+    // Database configuration with SQLite
     TypeOrmModule.forRoot({
       type: 'sqlite',
       database: 'database.sqlite',
       entities: [User],
-      synchronize: true, // Only for development
-      logging: false,
+      synchronize: true, // Only for development - auto-sync schema changes
+      logging: false, // Disable query logging for production
     }),
+    // Rate limiting configuration
     ThrottlerModule.forRoot([{
-      ttl: 60000, // 1 minute
-      limit: 10, // 10 requests per minute
+      ttl: 60000, // Time window: 1 minute
+      limit: 10, // Maximum 10 requests per minute globally
     }]),
+    // Feature modules
     UsersModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
+    // Global exception filter for centralized error handling
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,
     },
+    // Global rate limiting guard
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
@@ -39,9 +48,13 @@ import { User } from './users/entities/user.entity';
   ],
 })
 export class AppModule implements NestModule {
+  /**
+   * Configure global middleware
+   * Applies logging middleware to all routes
+   */
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(LoggingMiddleware)
-      .forRoutes('*');
+      .forRoutes('*'); // Apply to all routes
   }
 }
