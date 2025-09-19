@@ -8,6 +8,7 @@ A NestJS-based microservice for managing users with external API integration, bu
 - **External API Integration**: Fetch data from reqres.in API
 - **Request Logging**: Comprehensive middleware for request tracking
 - **Error Handling**: Centralized error management with custom exceptions
+- **Rate Limiting**: Protection against abuse with configurable limits
 - **Data Validation**: DTOs with class-validator decorators
 - **TypeScript**: Full type safety and IntelliSense support
 - **Testing**: Comprehensive unit tests with Jest
@@ -109,6 +110,33 @@ Get all users
 ]
 ```
 
+## 🛡️ Rate Limiting
+
+The API implements rate limiting to protect against abuse and ensure fair usage:
+
+### Rate Limits
+- **GET /users**: 20 requests per minute per IP
+- **POST /users**: 5 requests per minute per IP
+- **Global limit**: 10 requests per minute per IP (fallback)
+
+### Rate Limit Headers
+All responses include rate limiting information:
+```
+X-RateLimit-Limit: 20
+X-RateLimit-Remaining: 19
+X-RateLimit-Reset: 60
+```
+
+### Rate Limit Exceeded
+When rate limits are exceeded, the API returns:
+```json
+{
+  "statusCode": 429,
+  "message": "ThrottlerException: Too Many Requests",
+  "error": "Too Many Requests"
+}
+```
+
 ## 🔧 Development Methodology
 
 ### 1. Clean Architecture Principles
@@ -127,6 +155,7 @@ Get all users
 - **TypeScript**: Full type safety
 - **Validation**: Input validation with class-validator
 - **Error Handling**: Custom exceptions and global filters
+- **Rate Limiting**: Protection against abuse and DDoS attacks
 - **Logging**: Request/response tracking
 - **Testing**: Unit tests for all components
 
